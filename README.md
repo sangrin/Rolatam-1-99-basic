@@ -1,4 +1,4 @@
-# 🔥 OpenKore - Macro Full Dinâmica
+# 🔥 OpenKore - Macro básica
 
 Automação avançada para OpenKore utilizando exclusivamente o sistema de **eventMacros**, projetado para facilitar a configuração, controle e escalabilidade dos bots.
 
@@ -24,6 +24,7 @@ Toda configuração do usuário (como:
 Copie o conteúdo para sua pasta:
 
 /control/eventMacros.txt
+
 Edite os parâmetros dentro da função configurarParametrosUsuario.
 Rode seu bot normalmente.
 
