@@ -1,4 +1,4 @@
-# 🔥 OpenKore - Macro básica
+# 🔥 OpenKore - Macro Rogue básica
 
 Automação para OpenKore utilizando exclusivamente o sistema de **eventMacros**, projetado para facilitar a configuração, controle e escalabilidade dos bots.
 
