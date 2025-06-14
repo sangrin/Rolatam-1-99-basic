@@ -32,3 +32,9 @@ Rode seu bot normalmente.
 Plugin eventMacro.pl ativado.
 
 OpenKore configurado corretamente para o seu servidor.
+
+## ☕ Me apoie
+Se este projeto te ajudou, considere me apoiar com um café:
+
+**Chave Pix:** teozord47@gmail.com
+
