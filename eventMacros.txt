@@ -1,0 +1,469 @@
+#-------------------------------------------------------------------------------------
+# ---- me pague um café se você gostou desse arquivo ----
+# ---- https://github.com/Teozord/Rolatam-1-99-basic
+
+#-------------------------------------------------------------------------------------
+#---- Configuração Mapas de UP
+#-------------------------------------------------------------------------------------
+sub extrairMapasDeUp {
+    my ($lvl) = @_;
+    my @ranges = (
+        [  1, 12, 'prt_fild06', 'prontera' ],
+        [ 13, 20, 'pay_fild08', 'payon'     ],
+        [ 21, 27, 'pay_dun00',  'payon'     ],
+        [ 28, 35, 'pay_fild07', 'payon'     ],
+        [ 36, 48, 'iz_dun00',   'izlude'     ],
+        [ 49, 55, 'iz_dun02',   'izlude'    ],
+        [ 56, 70, 'moc_fild17', 'morocc'    ],
+        [ 71, 85, 'mjolnir_11', 'prontera'  ],
+        [ 86, 94, 'lou_fild01', 'louyang'   ],
+        [ 95, 98, 'gef_fild06', 'geffen'    ],
+    );
+    for my $r (@ranges) {
+        my ($min,$max,$lock,$save) = @$r;
+        return { lockMap=>$lock, saveMap=>$save }
+            if $lvl >= $min && $lvl <= $max;
+    }
+    return {};
+}
+
+#-------------------------------------------------------------------------------------
+# ---- Configuração NPCS Compra/Venda ----
+#-------------------------------------------------------------------------------------
+sub obterNpcDaCidade {
+    my $cidade = $config{saveMap} || $config{lockMap} || "prontera";
+    my %npc = (
+        prontera  => ["prt_in",     126, 76], #Ok
+        payon     => ["payon_in01", 5,  49], #Ok
+        izlude    => ["prt_in",     126, 76], #Está Prt pq o bot não está conseguindo chegar até o npc de Izlude=> ["izlude_in",  57, 110],
+        geffen    => ["geffen",     120, 65], #falta validar coordenadas
+        morocc    => ["morocc_in",  159, 97], #Ok
+        aldebaran => ["aldeba_in",  183, 164], #falta validar coordenadas
+        louyang   => ["lou_in01",   196, 104] #falta validar coordenadas
+    );
+    my $dados = $npc{$cidade} // $npc{prontera};
+    return { mapa => $dados->[0], x => $dados->[1], y => $dados->[2] };
+}
+
+#-------------------------------------------------------------------------------------
+# ---- Configuraçõs de Builds ---
+#-------------------------------------------------------------------------------------
+sub configurarBuild {
+    my %configsBuild = (
+        skillsAprendiz => 'NV_BASIC 9',
+        skillsClasse1 => ' TF_MISS 10, TF_DOUBLE 10, TF_POISON 3, TF_DETOXIFY 1, TF_STEAL 10, TF_HIDING 10, TF_POISON 8',
+        skillsClasse2 => 'RG_SNATCHER 10, RG_STEALCOIN 10, RG_BACKSTAP 4, RG_TUNNELDRIVE 5, RG_RAID 5, RG_INTIMIDATE 5, RG_PLAGIARISM 10',
+        skillsClasse1T => 'TF_MISS 10, TF_DOUBLE 10, TF_POISON 3, TF_DETOXIFY 1, TF_STEAL 10, TF_HIDING 10, TF_POISON 8',
+        skillsClasse2T => 'RG_SNATCHER 10, RG_STEALCOIN 10, SM_SWORD 10, RG_BACKSTAP 8, RG_TUNNELDRIVE 5, ST_CHASEWALK 5, RG_RAID 5, RG_INTIMIDATE 5, RG_PLAGIARISM 10, ST_PRESERVE 1',
+        skillsClasse3 => '-1',
+        statsPadrao => '40 dex, 20 agi, 10 str, 50 dex, 42 agi, 30 str, 50 agi, 40 str, 60 dex, 60 agi, 70 dex, 78 agi, 60 str, 92 agi, 70 str, 9 vit',
+        statsPadraoTransclasse => '40 dex, 20 agi, 10 str, 50 dex, 42 agi, 30 str, 50 agi, 40 str, 60 dex, 60 agi, 70 dex, 78 agi, 60 str, 94 agi, 70 str, 99 agi',
+        statsPadraoClasse3 => 'dex 90, agi 120, str 90',
+    );
+    return \%configsBuild;
+}
+
+##########################################################################
+# CONFIGURAÇÕES GERAIS DO USUÁRIO
+##########################################################################
+sub configurarParametrosUsuario {
+    my %parametrosUsuario = (
+        pesoParaVender        => 85, #em percentual
+        hpParaUsarPocao       => 50, #em percentual
+        pocaoParaUsar         => 'Poção de Laranja', #nome da poção a ser usada
+        minPocao              => 30, #mínimo de poções de que vão ser compradas
+        maxPocao              => 120, #máximo de poções de que vão ser compradas
+        zenyMinimoParaCompra  => 30000, #só realiza compra se tiver mais que esse valor
+    );
+    return \%parametrosUsuario;
+}
+
+
+
+#-------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------
+# ----------- A partir daqui, só edite se você souber o que está fazendo -------------
+#-------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------
+
+
+
+#-------------------------------------------------------------------------------------
+# ---- Atualiza mapas de up automaticamente ----
+#-------------------------------------------------------------------------------------
+
+automacro atualizarMapasDeUp {
+    BaseLevel != 99
+    timeout    300
+    priority   4
+    exclusive  1
+    call atualizarMapasDeUp
+}
+
+macro atualizarMapasDeUp {
+    $lvl = $.lvl
+    %m = extrairMapasDeUp($lvl)
+    if (!&exists($m{lockMap})) {
+        [
+        error ===================================
+        error = ERRO: Mapa indefinido para nível $lvl.
+        error ===================================
+        ]
+        stop
+    }
+    [
+    log ===================================
+    log = Mapas atualizados: $m{lockMap} / $m{saveMap}
+    log ===================================
+    ]
+    do conf lockMap $m{lockMap}
+    do conf saveMap $m{saveMap}
+}
+
+#-------------------------------------------------------------------------------------
+# ---- Automacro: Atualiza build de stats/skills de aprendiz/gatunos/rogues----
+#-------------------------------------------------------------------------------------
+
+automacro inicializar {
+    run-once 1
+    priority   2
+    exclusive 1
+    BaseLevel > 0
+    call {
+        %configsBuild = configurarBuild()
+        %parametrosClasses = inicializarParametrosClasses()
+        %parametrosUsuario = configurarParametrosUsuario()
+    }
+}
+
+sub inicializarParametrosClasses {
+    return {
+        idC1 => 6,
+        idBC1 => 4029,
+        idC2 => 17,
+        idC2Alt => -1,
+        idBC2 => 4040,
+        idBC2Alt => -1,
+        idC1T => 4007,
+        idC2T => 4018,
+        idC2TAlt => -1,
+        idC3 => 4072,
+        idC3Alt => -1,
+        idBC3 => 4108,
+        idBC3Alt => -1
+    }
+}
+
+automacro atualizarBuild {
+    BaseLevel > 0
+    priority   3
+    timeout 600 #atualiza as variáveis a cada 10 minutos
+    exclusive 1
+    call atualizarBuild
+}
+
+macro atualizarBuild {
+
+    $idClasseAtual = pegarID() #sub se encontra no arquivo utilidades.pm
+    call atualizarBuild_atributos
+    call atualizarBuild_skills
+
+}
+
+macro atualizarBuild_skills {
+    do conf skillsAddAuto 1 if (&config(skillsAddAuto) != 1)
+    $classeSemBuild = undef
+    $classeAtual = undef
+    
+    if ($idClasseAtual ~ 0, 161, 4001, 4023) { #Aprendiz / Aprendiz T. / Baby Aprendiz
+        do conf skillsAddAuto_list $configsBuild{skillsAprendiz} if (&config(skillsAddAuto_list) != $configsBuild{skillsAprendiz})
+        $classeAtual = Aprendiz
+    } elsif ($idClasseAtual ~ $parametrosClasses{idC1}, $parametrosClasses{idBC1}) { #Classes 1
+        if ($configsBuild{skillsClasse1} != -1) { #se existir as skills
+            do conf skillsAddAuto_list $configsBuild{skillsClasse1} if (&config(skillsAddAuto_list) != $configsBuild{skillsClasse1})
+            $classeAtual = Classe 1
+        } else {
+            $classeSemBuild = classe 1
+        }
+    } elsif ($idClasseAtual ~ $parametrosClasses{idC2}, $parametrosClasses{idC2Alt}, $parametrosClasses{idBC2}, $parametrosClasses{idBC2Alt}) { #Classes 2
+        if ($configsBuild{skillsClasse2} != -1) {
+            do conf skillsAddAuto_list $configsBuild{skillsClasse2} if (&config(skillsAddAuto_list) != $configsBuild{skillsClasse2})
+            $classeAtual = Classe 2
+        } else {
+            $classeSemBuild = classe 2
+        }
+    } elsif ($idClasseAtual == $parametrosClasses{idC1T}) { #Classes 1T
+        if ($configsBuild{skillsClasse1T} != -1) {
+            do conf skillsAddAuto_list $configsBuild{skillsClasse1T} if (&config(skillsAddAuto_list) != $configsBuild{skillsClasse1T})
+            $classeAtual = Classe 1 Trans
+        } else {
+            $classeSemBuild = classe 1 Trans
+        }
+    } elsif ($idClasseAtual ~ $parametrosClasses{idC2T}, $parametrosClasses{idC2TAlt} ) { #Classes 2T
+        if ($configsBuild{skillsClasse2T} != -1) {
+            do conf skillsAddAuto_list $configsBuild{skillsClasse2T} if (&config(skillsAddAuto_list) != $configsBuild{skillsClasse2T})
+            $classeAtual = Classe 2 Trans
+        } else {
+            $classeSemBuild = classe 2 trans
+        }
+    } elsif ($idClasseAtual ~ $parametrosClasses{idC3}, $parametrosClasses{idC3Alt}, $parametrosClasses{idBC3}, $parametrosClasses{idBC3Alt}) { #Classes 3
+        if ($configsBuild{skillsClasse3} != -1) {
+            do conf skillsAddAuto_list $configsBuild{skillsClasse3} if (&config(skillsAddAuto_list) != $configsBuild{skillsClasse3})
+            $classeAtual = Classe 3
+        } else {
+            $classeSemBuild = classe 3
+        }
+    } else {
+        [
+        error ===================================
+        error Não foi possivel saber qual é a sua classe.
+        error ID encontrado: $idClasseAtual
+        error Contate os criadores da eventMacro
+        error ===================================
+        ]
+        call informacoes
+        stop
+    }
+    if (&defined($classeSemBuild) = 1) {
+        [
+        error ===================================
+        error = NÃO EXISTE UMA BUILD DE SKILLS PRONTA PARA A $classeSemBuild
+        error = SEU BOT NÃO VAI DISTRIBIUR PONTOS DE HABILIDADE
+        error = SUGIRO FORTEMENTE CRIAR A SUA PRÓPRIA BUILD
+        error ===================================
+        ]
+        pause 5
+        stop
+    }
+    if (&defined($classeAtual) = 1) {
+        [
+        log ===================================
+        log = build de skills da $classeAtual ta certinha
+        log ===================================
+        ]
+    }
+}
+
+macro atualizarBuild_atributos {
+    $classeSemBuildDeAtributos = undef
+    do conf statsAddAuto 1 if (&config(statsAddAuto) != 1)
+    do conf statsAddAuto_dontUseBonus 1 if (&config(statsAddAuto_dontUseBonus) != 1)
+    if ($idClasseAtual ~ 0, 4023, $parametrosClasses{idC1}, $parametrosClasses{idBC1}, $parametrosClasses{idC2}, $parametrosClasses{idBC2}, $parametrosClasses{idC2Alt}, $parametrosClasses{idBC2Alt} ) {
+        if ($configsBuild{statsPadrao} != -1) {
+            do conf statsAddAuto_list $configsBuild{statsPadrao} if (&config(statsAddAuto_list) != $configsBuild{statsPadrao})
+        } else {
+            $classeSemBuildDeAtributos = 1
+        }
+        
+    } elsif ($idClasseAtual ~ 4001, $parametrosClasses{idC1T}, $parametrosClasses{idC2T}, $parametrosClasses{idC2TAlt}) {
+        if ($configsBuild{statsPadraoTransclasse} != -1) {
+            do conf statsAddAuto_list $configsBuild{statsPadraoTransclasse} if (&config(statsAddAuto_list) != $configsBuild{statsPadraoTransclasse})
+        } else {
+            $classeSemBuildDeAtributos = 1
+        }
+        
+    } elsif ($idClasseAtual ~ $parametrosClasses{idC3}, $parametrosClasses{idC3Alt}, $parametrosClasses{idBC3}, $parametrosClasses{idBC3Alt} ) {
+        if ($configsBuild{statsPadraoClasse3} != -1) {
+            do conf statsAddAuto_list $configsBuild{statsPadraoClasse3} if (&config(statsAddAuto_list) != $configsBuild{statsPadraoClasse3})
+        } else {
+            $classeSemBuildDeAtributos = 1
+        }
+    
+    } else {
+        [
+        error ===================================
+        error = ocorreu um erro ao definir a build de atributos padrão para sua classe
+        error = caso isso apareça mais de 1 vez, contate os criadores da eventMacro
+        error = \$idClasseAtual : "$idClasseAtual"
+        error ===================================
+        ]
+        call informacoes
+        stop
+    }
+    
+    if ($classeSemBuildDeAtributos = 1) {
+        [
+        error ===================================
+        error = NÃO EXISTE UMA BUILD DE ATRIBUTOS PRONTA PARA A CLASSE
+        error = SEU BOT NÃO VAI DISTRIBIUR PONTOS DE ATRIBUTOS
+        error = SUGIRO FORTEMENTE CRIAR A SUA PRÓPRIA BUILD
+        error ===================================
+        ]
+        pause 5
+        stop
+    }
+
+    #se chegar até aqui tudo deu certo
+    [
+    log ===================================
+    log = build de atributos ta certinho
+    log ===================================
+    ]
+}
+
+sub pegarID {
+    return $char->{jobID};
+}
+
+#-----------------------------------------------------------------------------------------------------
+# ---- Define poção de aprendiz do evento como prioridade, antes de começar comprar outras poções ----
+#-----------------------------------------------------------------------------------------------------
+automacro usarPocaoDeAprendiz {
+    ConfigKeyNot useSelf_item_1 [Evento] Poção de Aprendiz
+    InInventory "[Evento] Poção de Aprendiz" > 0
+    exclusive 1
+    call {
+        log parece que tenho [Evento] Poção de Aprendiz, mas ainda não foi configurado pra ser usado
+        log mudando isso
+        $potName = pegarNomePeloIdDoItem(11567) # [Evento] Poção de Aprendiz
+        do conf useSelf_item_1 $potName
+        do conf useSelf_item_1_disabled 0
+        do conf useSelf_item_1_hp < $parametrosUsuario{hpParaUsarPocao}%
+        do conf getAuto_0 $potName
+        do conf getAuto_0_minAmount 20
+        do conf getAuto_0_maxAmount 200
+        do conf getAuto_0_passive 0
+        log pronto
+    }
+}
+
+sub pegarNomePeloIdDoItem {
+    my ($id) = @_;
+    if (exists $items_lut{$id}) {
+        return $items_lut{$id};
+    } else {
+        return $id;
+    }
+}
+
+#-------------------------------------------------------------------------------------
+# ---- Compra Poção configurada, por cidade se não tem mais poção do aprendiz --------
+#-------------------------------------------------------------------------------------
+
+automacro VerificarPocoes {
+    timeout    300
+    InInventory "$parametrosUsuario{pocaoParaUsar}" <= $parametrosUsuario{minPocao}
+    InInventory "[Evento] Poção de Aprendiz" <= 25
+    Zeny > $parametrosUsuario{zenyMinimoParaCompra}
+    BaseLevel > 0
+    priority   5
+    exclusive 1
+    call VerificarPocoes
+}
+
+
+macro VerificarPocoes {
+    %npc = obterNpcDaCidade()
+
+    [
+    log ============================================
+    log = Configurando compra e uso de Poção Laranja
+    log = Usando NPC em $npc{mapa} $npc{x} $npc{y}
+    log ============================================
+    ]
+
+    do move $npc{mapa} $npc{x} $npc{y}
+
+    do conf buyAuto_0 Poção Laranja
+    do conf buyAuto_0_minAmount $parametrosUsuario{minPocao}
+    do conf buyAuto_0_maxAmount $parametrosUsuario{maxPocao}
+    do conf buyAuto_0_npc $npc{mapa} $npc{x} $npc{y}
+    do conf buyAuto_0_disabled 0
+
+    do conf useSelf_item_0 Poção Laranja
+    do conf useSelf_item_0_hp < 50%
+    do conf useSelf_item_0_disabled 0
+
+    log Configuração concluída!
+}
+
+#-------------------------------------------------------------------------------------
+# ---- Vender Loot quando peso acima do definido ----
+#-------------------------------------------------------------------------------------
+
+automacro venderLootPeso {
+    BaseLevel > 0
+    Zeny > 0
+    timeout    300
+    exclusive 1
+    priority 3
+    call checkPesoEVender
+}
+
+macro checkPesoEVender {
+    if ($.weightpercent >= $parametrosUsuario{pesoParaVender}) {
+        log ============================================
+        log Peso acima de 85%, iniciando venda de loot!
+        log ============================================
+
+        call venderLoot
+
+        # Após a venda, esperar até garantir que o peso está baixo
+        while ($.weightpercent >= 85) {
+            log BUG: Mesmo após macro venda o Peso atual: $.weightpercent%
+            call checkPesoEVender
+        }
+
+        log Peso abaixo de 85%, liberando bot para próxima ação!
+    }
+}
+
+macro venderLoot {
+    %npc = obterNpcDaCidade()
+
+    [
+    log ============================================
+    log = Peso acima de 85%
+    log = Indo vender loot no NPC em $npc{mapa} $npc{x} $npc{y}
+    log ============================================
+    ]
+
+    do move $npc{mapa} $npc{x} $npc{y}
+    do conf sellAuto_npc $npc{mapa} $npc{x} $npc{y}
+    do autosell
+
+    [
+    log ============================================
+    log = Venda concluída!
+    log ============================================
+    ]
+}
+
+#-------------------------------------------------------------------------------------
+# ---- Pausa gatunos no job 50 ----
+#-------------------------------------------------------------------------------------
+
+automacro pausarNoNivel50 {
+    JobLevel >= 50
+    JobID      6 #apenas gatunos
+    priority   1
+    exclusive  1
+    run-once   1
+    call pausarNoNivel50
+}
+
+macro pausarNoNivel50 {
+    log ======= Nivel 50 atingido, pausando o bot! =======
+    pause 99999999999
+}
+
+#-------------------------------------------------------------------------------------
+# ---- Pausa aprendiz no job 10 ----
+#-------------------------------------------------------------------------------------
+
+automacro pausarAprendizJob10 {
+    JobLevel >= 10
+    JobID      0 #apenas aprendiz
+    priority   1
+    exclusive  1
+    run-once   1
+    call pausarAprendizJob10
+}
+
+macro pausarAprendizJob10 {
+    log ======= Aprendiz Job 10 atingido, pausando o bot! =======
+    pause 99999999999
+}
+
+
+
