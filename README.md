@@ -1,6 +1,6 @@
 # 🔥 OpenKore - Macro básica
 
-Automação avançada para OpenKore utilizando exclusivamente o sistema de **eventMacros**, projetado para facilitar a configuração, controle e escalabilidade dos bots.
+Automação para OpenKore utilizando exclusivamente o sistema de **eventMacros**, projetado para facilitar a configuração, controle e escalabilidade dos bots.
 
 ## 🎯 Funcionalidades
 
@@ -12,6 +12,16 @@ Automação avançada para OpenKore utilizando exclusivamente o sistema de **eve
 - ✅ Fácil personalização de parâmetros diretamente no início do script.
 - ✅ Sistema inteligente de NPCs de venda e compra por cidade.
 
+## ➡️ O que ainda não faz
+- ❌ Sistema automático de quests (classe, eden, etc.).
+- ❌ Não faz evolução de classe automaticamente (apenas pausa no Job desejado).
+- ❌ Não possui sistema de teleport automático inteligente baseado em presença de mobs ou perigos no mapa.
+- ❌ Não possui sistema de coleta de loot específico (pega tudo ou depende da configuração manual do OpenKore).
+- ❌ Não faz gerenciamento de equipamentos (não troca armas, armaduras ou acessórios).
+- ❌ Não implementa controle de buffs, skills de suporte ou skills de SP.
+- ❌ Não possui integração com APIs externas ou notificações via Discord, Telegram, e-mail.
+- ❌ Não faz checagem de death warp (teleporte após morrer) para confirmar se voltou para a cidade correta.
+  
 ## 🛠️ Configurações
 
 Toda configuração do usuário (como:
