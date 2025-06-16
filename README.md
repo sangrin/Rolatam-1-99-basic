@@ -5,6 +5,7 @@ Automação para OpenKore utilizando exclusivamente o sistema de **eventMacros**
 ## 🎯 Funcionalidades
 
 - ✅ Distribuição automática de **status e skills** por classe e evolução.
+- ✅ Faz evolução de classe automaticamente pela Valkyria.
 - ✅ Sistema inteligente de troca de mapas de UP conforme o nível.
 - ✅ Controle de compra de poções dinâmico baseado na cidade atual.
 - ✅ Verificação de peso para venda automática de loot.
@@ -14,7 +15,6 @@ Automação para OpenKore utilizando exclusivamente o sistema de **eventMacros**
 
 ## ➡️ O que ainda não faz
 - ❌ Sistema automático de quests (classe, eden, etc.).
-- ❌ Não faz evolução de classe automaticamente (apenas pausa no Job desejado).
 - ❌ Não possui sistema de teleport automático inteligente baseado em presença de mobs ou perigos no mapa.
 - ❌ Não possui sistema de coleta de loot específico (pega tudo ou depende da configuração manual do OpenKore).
 - ❌ Não faz gerenciamento de equipamentos (não troca armas, armaduras ou acessórios).
