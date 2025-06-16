@@ -9,7 +9,6 @@ Automação para OpenKore utilizando exclusivamente o sistema de **eventMacros**
 - ✅ Sistema inteligente de troca de mapas de UP conforme o nível.
 - ✅ Controle de compra de poções dinâmico baseado na cidade atual.
 - ✅ Verificação de peso para venda automática de loot.
-- ✅ Pausa automática no **Job 10 (Aprendiz)** e no **Job 50 (Gatuno)** para evolução manual.
 - ✅ Fácil personalização de parâmetros diretamente no início do script.
 - ✅ Sistema inteligente de NPCs de venda e compra por cidade.
 
