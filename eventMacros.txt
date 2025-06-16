@@ -476,7 +476,7 @@ macro mudarParaRogue {
 }
 
 #-------------------------------------------------------------------------------------
-# ---- Muda apra Gatuno no job 10 ----
+# ---- Muda para Gatuno no job 10 ----
 #-------------------------------------------------------------------------------------
 
 automacro AprendizJob10 {
@@ -484,63 +484,25 @@ automacro AprendizJob10 {
     JobID      0
     run-once   1
     exclusive  1
-    call checkZenyViagem
+    call virarGatuno
 }
 
-
-macro checkZenyViagem {
-    log ===========================================
-    log = Iniciando checkZenyViagem
-    log ===========================================
-
-    $lootValor = &calcularValorDosLoots()
-
-    log = Zeny atual: $.zeny
-    log = Loot calculado: $lootValor z
-
-    if ($.zeny >= 120) {
-        log = Tenho zeny suficiente ($.zeny), indo virar Gatuno
-        call mudarParaGatuno
-    } elsif ($lootValor >= 120) {
-        log = Tenho loot suficiente ($lootValor z), vendendo e indo virar Gatuno
-        call venderLoot
-        call mudarParaGatuno
-    } else {
-        log = Ainda não tenho zeny nem loot suficiente, continuando em prt_fild08
-    }
+macro virarGatuno {
+	do conf attackAuto 0
+	do conf lockMap payon 166 172
+	do move payon 166 172
+	pause 5
+	do talknpc 169 172
+	pause 2
+	do talk resp 1
+	pause 2
+	do talk resp 0
+	pause 2
+	do talk resp 5
+	pause 10
+	do eq Faca [3]
+	do conf attackAuto 2
 }
-
-
-sub calcularValorDosLoots {
-    my $total = 0;
-    my %precos = (
-        'Muco Pegajoso'   => 26,
-        'Pluma'           => 7,
-        'Cenoura'         => 7,
-        'Erva Vermelha'   => 9,
-        'Maçã'            => 7,
-        'Asa de Mosca'    => 125,
-        'Pó de Borboleta' => 33,
-    );
-
-    foreach my $item (keys %precos) {
-        my $qtd = 0;
-        foreach my $inv (@{$::char->inventory->getItems()}) {
-            if ($inv->{name} eq $item) {
-                $qtd = $inv->{amount};
-                last;
-            }
-        }
-        $total += $qtd * $precos{$item};
-    }
-    return $total;
-}
-
-
-
-#-------------------------------------------------------------------------------------
-# ---- Aprendiz no job 10 ----
-#-------------------------------------------------------------------------------------
 
 automacro BuyDamascus {
     Zeny > $parametrosUsuario{zenyMinDamascus}
