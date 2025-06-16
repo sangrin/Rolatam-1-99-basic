@@ -1,5 +1,6 @@
 #-------------------------------------------------------------------------------------
-# ---- me pague um café se você gostou desse arquivo ----
+# ---- Se você gostou desse arquivo, e pague um café :D
+# ---- Pix e versão atualizada no github:
 # ---- https://github.com/Teozord/Rolatam-1-99-basic
 
 #-------------------------------------------------------------------------------------
@@ -8,8 +9,8 @@
 sub extrairMapasDeUp {
     my ($lvl) = @_;
     my @ranges = (
-        [  1, 12, 'prt_fild06', 'prontera' ],
-        [ 13, 20, 'pay_fild08', 'payon'     ],
+        [  1, 13, 'prt_fild08', 'prontera' ], #Aconselho não mudar, ele deve pegar 120z itens para ter teleport payon e virar gatuno
+        [ 14, 20, 'pay_fild08', 'payon'     ],
         [ 21, 27, 'pay_dun00',  'payon'     ],
         [ 28, 35, 'pay_fild07', 'payon'     ],
         [ 36, 48, 'iz_dun00',   'izlude'     ],
@@ -25,6 +26,23 @@ sub extrairMapasDeUp {
             if $lvl >= $min && $lvl <= $max;
     }
     return {};
+}
+
+##########################################################################
+# CONFIGURAÇÕES GERAIS DO USUÁRIO
+##########################################################################
+sub configurarParametrosUsuario {
+    my %parametrosUsuario = (
+        pesoParaVender        => 85, #em percentual
+        hpParaUsarPocao       => 50, #em percentual
+        pocaoParaUsar         => 'Poção de Laranja', #nome da poção a ser usada
+        minPocao              => 30, #mínimo de poções de que vão ser compradas
+        maxPocao              => 120, #máximo de poções de que vão ser compradas
+        zenyMinPot  => 30000, #só realiza compra de pots se tiver mais que esse valor
+        zenyMinDamascus => 80000, #só realiza compra da Damascus tiver mais que esse valor
+        autoComprarDamascus => 1, #se 1, compra Damascus quando tiver zeny suficiente
+    );
+    return \%parametrosUsuario;
 }
 
 #-------------------------------------------------------------------------------------
@@ -63,29 +81,12 @@ sub configurarBuild {
     return \%configsBuild;
 }
 
-##########################################################################
-# CONFIGURAÇÕES GERAIS DO USUÁRIO
-##########################################################################
-sub configurarParametrosUsuario {
-    my %parametrosUsuario = (
-        pesoParaVender        => 85, #em percentual
-        hpParaUsarPocao       => 50, #em percentual
-        pocaoParaUsar         => 'Poção de Laranja', #nome da poção a ser usada
-        minPocao              => 30, #mínimo de poções de que vão ser compradas
-        maxPocao              => 120, #máximo de poções de que vão ser compradas
-        zenyMinimoParaCompra  => 30000, #só realiza compra se tiver mais que esse valor
-    );
-    return \%parametrosUsuario;
-}
-
-
 
 #-------------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------------
 # ----------- A partir daqui, só edite se você souber o que está fazendo -------------
 #-------------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------------
-
 
 
 #-------------------------------------------------------------------------------------
@@ -111,13 +112,15 @@ macro atualizarMapasDeUp {
         ]
         stop
     }
-    [
-    log ===================================
-    log = Mapas atualizados: $m{lockMap} / $m{saveMap}
-    log ===================================
-    ]
-    do conf lockMap $m{lockMap}
-    do conf saveMap $m{saveMap}
+        [
+        log ===================================
+        log = Mapas atualizados: $m{lockMap} / $m{saveMap}
+        log ===================================
+        ]
+        do conf attackAuto 2
+        do conf route_randomWalk 2
+        do conf lockMap $m{lockMap}
+        do conf saveMap $m{saveMap}
 }
 
 #-------------------------------------------------------------------------------------
@@ -318,7 +321,7 @@ automacro usarPocaoDeAprendiz {
         $potName = pegarNomePeloIdDoItem(11567) # [Evento] Poção de Aprendiz
         do conf useSelf_item_1 $potName
         do conf useSelf_item_1_disabled 0
-        do conf useSelf_item_1_hp < $parametrosUsuario{hpParaUsarPocao}%
+        do conf useSelf_item_1_hp < 50%
         do conf getAuto_0 $potName
         do conf getAuto_0_minAmount 20
         do conf getAuto_0_maxAmount 200
@@ -343,8 +346,8 @@ sub pegarNomePeloIdDoItem {
 automacro VerificarPocoes {
     timeout    300
     InInventory "$parametrosUsuario{pocaoParaUsar}" <= $parametrosUsuario{minPocao}
-    InInventory "[Evento] Poção de Aprendiz" <= 25
-    Zeny > $parametrosUsuario{zenyMinimoParaCompra}
+    InInventory "[Evento] Poção de Aprendiz" <= 20
+    Zeny > $parametrosUsuario{zenyMinPot}
     BaseLevel > 0
     priority   5
     exclusive 1
@@ -372,7 +375,6 @@ macro VerificarPocoes {
 
     do conf useSelf_item_0 Poção Laranja
     do conf useSelf_item_0_hp < 50%
-    do conf useSelf_item_0_disabled 0
 
     log Configuração concluída!
 }
@@ -383,7 +385,7 @@ macro VerificarPocoes {
 
 automacro venderLootPeso {
     BaseLevel > 0
-    Zeny > 0
+    JobLevel >= 1
     timeout    300
     exclusive 1
     priority 3
@@ -430,40 +432,147 @@ macro venderLoot {
 }
 
 #-------------------------------------------------------------------------------------
-# ---- Pausa gatunos no job 50 ----
+# ---- Muda para Rogue no job 40 ----
 #-------------------------------------------------------------------------------------
 
-automacro pausarNoNivel50 {
-    JobLevel >= 50
+automacro mudarRogue {
+    JobLevel >= 40
     JobID      6 #apenas gatunos
     priority   1
     exclusive  1
     run-once   1
-    call pausarNoNivel50
+    call mudarparaRogue
 }
 
-macro pausarNoNivel50 {
-    log ======= Nivel 50 atingido, pausando o bot! =======
-    pause 99999999999
+macro mudarParaRogue {
+
+    #teleportar para Payon
+    #do move izlude 128 145
+    #do talk npc izlude 128 148 r2 r0 r1 #teleportar para Payon
+    #pause 5
+
+    #Realizar auto save
+    do conf lockMap payon 179 104
+    do move payon 179 100
+    do talknpc 181 104 r0 r0
+
+    #ir até o npc troca classe
+	do conf lockMap payon 166 172
+	do move payon 166 172
+	pause 5
+	do talknpc 169 172
+	pause 2
+	do talk resp 1
+	pause 2
+	do talk resp 1
+	pause 2
+	do talk resp 2
+	pause 10
+	do eq Faca [3]
+	do conf attackAuto 2
+	do conf route_randomWalk 2
+
+    call atualizarMapasDeUp
 }
 
 #-------------------------------------------------------------------------------------
-# ---- Pausa aprendiz no job 10 ----
+# ---- Muda apra Gatuno no job 10 ----
 #-------------------------------------------------------------------------------------
 
-automacro pausarAprendizJob10 {
+automacro AprendizJob10 {
     JobLevel >= 10
-    JobID      0 #apenas aprendiz
+    JobID      0
+    run-once   1
+    exclusive  1
+    call checkZenyViagem
+}
+
+
+macro checkZenyViagem {
+    log ===========================================
+    log = Iniciando checkZenyViagem
+    log ===========================================
+
+    $lootValor = &calcularValorDosLoots()
+
+    log = Zeny atual: $.zeny
+    log = Loot calculado: $lootValor z
+
+    if ($.zeny >= 120) {
+        log = Tenho zeny suficiente ($.zeny), indo virar Gatuno
+        call mudarParaGatuno
+    } elsif ($lootValor >= 120) {
+        log = Tenho loot suficiente ($lootValor z), vendendo e indo virar Gatuno
+        call venderLoot
+        call mudarParaGatuno
+    } else {
+        log = Ainda não tenho zeny nem loot suficiente, continuando em prt_fild08
+    }
+}
+
+
+sub calcularValorDosLoots {
+    my $total = 0;
+    my %precos = (
+        'Muco Pegajoso'   => 26,
+        'Pluma'           => 7,
+        'Cenoura'         => 7,
+        'Erva Vermelha'   => 9,
+        'Maçã'            => 7,
+        'Asa de Mosca'    => 125,
+        'Pó de Borboleta' => 33,
+    );
+
+    foreach my $item (keys %precos) {
+        my $qtd = 0;
+        foreach my $inv (@{$::char->inventory->getItems()}) {
+            if ($inv->{name} eq $item) {
+                $qtd = $inv->{amount};
+                last;
+            }
+        }
+        $total += $qtd * $precos{$item};
+    }
+    return $total;
+}
+
+
+
+#-------------------------------------------------------------------------------------
+# ---- Aprendiz no job 10 ----
+#-------------------------------------------------------------------------------------
+
+automacro BuyDamascus {
+    Zeny > $parametrosUsuario{zenyMinDamascus}
+    BaseLevel > 99
     priority   1
     exclusive  1
-    run-once   1
-    call pausarAprendizJob10
+    call verificarEDarBuyDamascus
 }
 
-macro pausarAprendizJob10 {
-    log ======= Aprendiz Job 10 atingido, pausando o bot! =======
-    pause 99999999999
+macro verificarEDarBuyDamascus {
+    if (!itemEquipped("Damascus [1]")) && ($parametrosUsuario{autoComprarDamascus} == 1) {
+        [
+        log Não tenho Damascus equipada, iniciando compra!
+        call comprarDamascus
+    } else {
+    }
 }
 
-
-
+macro comprarDamascus {
+	do autosell
+	do conf lockmap morocc_in 138 70
+	do move morocc_in 138 70
+	do talknpc 141 67
+	pause 2
+	do store
+	pause 2
+	do buy 9 1
+	pause 2
+	do eq Damascus [1]
+	pause 2
+	do conf lockMap geffen 116 68
+	do move geffen 116 68
+	do talknpc 120 62 r0
+    call atualizarMapasDeUp
+}
