@@ -1,5 +1,5 @@
 #-------------------------------------------------------------------------------------
-# ---- Se você gostou desse arquivo, e pague um café :D
+# ---- Se você gostou desse arquivo, me pague um café :D
 # ---- Pix e versão atualizada no github:
 # ---- https://github.com/Teozord/Rolatam-1-99-basic
 
@@ -344,8 +344,8 @@ sub pegarNomePeloIdDoItem {
 #-------------------------------------------------------------------------------------
 
 automacro VerificarPocoes {
-    timeout    300
-    InInventory "$parametrosUsuario{pocaoParaUsar}" <= $parametrosUsuario{minPocao}
+    timeout    100
+    InInventory $parametrosUsuario{pocaoParaUsar} <= $parametrosUsuario{minPocao}
     InInventory "[Evento] Poção de Aprendiz" <= 20
     Zeny > $parametrosUsuario{zenyMinPot}
     BaseLevel > 0
@@ -401,7 +401,7 @@ macro checkPesoEVender {
         call venderLoot
 
         # Após a venda, esperar até garantir que o peso está baixo
-        while ($.weightpercent >= 85) {
+        while ($.weight >= 85) {
             log BUG: Mesmo após macro venda o Peso atual: $.weightpercent%
             call checkPesoEVender
         }
