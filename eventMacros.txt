@@ -345,7 +345,7 @@ sub pegarNomePeloIdDoItem {
 
 automacro VerificarPocoes {
     timeout    100
-    InInventory $parametrosUsuario{pocaoParaUsar} <= $parametrosUsuario{minPocao}
+    InInventory "$parametrosUsuario{pocaoParaUsar}" <= $parametrosUsuario{minPocao}
     InInventory "[Evento] Poção de Aprendiz" <= 20
     Zeny > $parametrosUsuario{zenyMinPot}
     BaseLevel > 0
